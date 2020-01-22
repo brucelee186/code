@@ -1,0 +1,87 @@
+#include <SoftwareSerial.h>
+
+SoftwareSerial mySerial(10, 11); // RX, TX
+
+unsigned char sendDec[8] = {0x01, 0x03, 0x00, 0x48, 0x00, 0x08, 0xC4, 0x1A};
+String dataRec = "";
+void setup() {
+   Serial.begin(4800);
+     while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+  mySerial.begin(4800);
+}
+
+void loop() {
+   mySerial.write(sendDec,8);
+   delay(6000);
+    while(mySerial.available() > 0){
+      char tempChar = char(mySerial.read());
+      dataRec += tempChar;
+       delay(2);
+      }
+       
+  int strRec[100];
+   int j =0;
+  int arrValtage[6];
+  for(int i=0;i<dataRec.length();i++){
+    int tmp = 0;
+       tmp = dataRec[i];
+        int hex0 = tmp&15; 
+        tmp >>= 4;
+        int hex1 = tmp&15;
+         strRec[j]=hex1;
+         j++;
+          strRec[j]=hex0;
+          j++;
+      }
+        Serial.println("");
+       Serial.println("********************** START ************************");
+      float valtage =  getData(strRec,8);
+      Serial.print("Valtage:");
+      Serial.print(valtage,4);
+      Serial.println("V");
+
+      float electricity =  getData(strRec,16);
+      Serial.print("Electricity:");
+      Serial.print(electricity,4);
+      Serial.println("A");
+
+      float power =  getData(strRec,24);
+      Serial.print("Power:");
+      Serial.print(power,4);
+      Serial.println("W");
+
+      float electricEnergy =  getData(strRec,32);
+      Serial.print("Electric Energy:");
+      Serial.print(electricEnergy,4);
+      Serial.println("WH");
+
+      float powerFactor =  getData(strRec,40);
+      Serial.print("Power Factor:");
+      Serial.println(powerFactor,4);
+
+      float CO2 =  getData(strRec,48);
+      Serial.print("CO2:");
+      Serial.print(CO2,4);      
+      Serial.println("Kg");
+
+      float frequency =  getData(strRec,64)*100;
+      Serial.print("Frequency:");
+      Serial.print(frequency,2);      
+      Serial.println("Hz");
+      Serial.println("********************** END ************************");
+}
+
+float getData(int strRec[],int j){
+     long valTemp = 0;
+     float val = 0.00;
+      for(int i=0;i<6;i++){ 
+        int valInt =  strRec[i+j];
+        long valLong = pow(16, 5-i)*valInt;
+         valTemp += valLong;
+
+        }
+        val = (float) valTemp/10000;
+       return val;
+  }

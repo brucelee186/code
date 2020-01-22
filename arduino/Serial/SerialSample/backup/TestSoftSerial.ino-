@@ -1,0 +1,168 @@
+#include <SoftwareSerial.h>
+#include <string.h>
+
+SoftwareSerial mySerial(5, 6); // RX, TX
+
+unsigned char sendDec[8] = {0x01, 0x03, 0x00, 0x48, 0x00, 0x08, 0xC4, 0x1A};
+String dataRec = "";
+String strSerial = "";
+// ec01:Electric 01;
+String strComEc01 = "ec01";
+void setup() {
+   Serial.begin(4800);
+     while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+  mySerial.begin(4800);
+}
+
+
+void loop() {
+	while(Serial.available() > 0){
+		char dataSerRead= char(Serial.read());
+		Serial.print(dataSerRead);
+		strSerial += dataSerRead;
+		delay(100);
+	}
+//  Serial.println("");
+ // Serial.println(strSerial);
+
+    if(strComEc01.compareTo(strSerial) == 0){
+
+
+ // Serial.print("receive date: ");
+  //Serial.println(strSerial);
+	strSerial = "";
+//	Serial.println("strSerial clean afte:" + strSerial);
+	 mySerial.write(sendDec,8);
+    while(mySerial.available() > 0){
+      char tempChar = char(mySerial.read());
+      dataRec += tempChar;
+       delay(10);
+      }
+int strRec[100];
+   int j =0;
+  int arrValtage[6];
+  for(int i=0;i<dataRec.length();i++){
+    int tmp = 0;
+       tmp = dataRec[i];
+        int hex0 = tmp&15; 
+        tmp >>= 4;
+        int hex1 = tmp&15;
+	//Serial.println(dataRec[i],HEX);
+         strRec[j]=hex1;
+         j++;
+          strRec[j]=hex0;
+          j++;
+      }
+
+     Serial.println("");
+       Serial.println("********************** START ************************");
+	long valTemp = 0;
+	 j = 8;
+     float val = 0.00;
+      for(int i=0;i<6;i++){ 
+        int valInt =  strRec[i+j];
+        long valLong = pow(16, 5-i)*valInt;
+         valTemp += valLong;
+
+        }
+        float valtage = (float) valTemp/10000;
+
+
+      Serial.print("Valtage:");
+      Serial.print(valtage,4);
+      Serial.println("V");
+
+         valTemp = 0;
+         j = 16;
+      val = 0.00;
+      for(int i=0;i<6;i++){
+        int valInt =  strRec[i+j];
+        long valLong = pow(16, 5-i)*valInt;
+         valTemp += valLong;
+
+        }
+        float electricity = (float) valTemp/10000;
+
+     Serial.print("Electricity:");
+      Serial.print(electricity,4);
+      Serial.println("A");
+  valTemp = 0;
+         j = 24;
+      val = 0.00;
+      for(int i=0;i<6;i++){
+        int valInt =  strRec[i+j];
+        long valLong = pow(16, 5-i)*valInt;
+         valTemp += valLong;
+
+        }
+         float power = (float) valTemp/10000;
+      Serial.print("Power:");
+      Serial.print(power,4);
+      Serial.println("W");
+
+
+         valTemp = 0;
+         j = 32;
+      val = 0.00;
+      for(int i=0;i<6;i++){
+        int valInt =  strRec[i+j];
+        long valLong = pow(16, 5-i)*valInt;
+         valTemp += valLong;
+
+        }
+ float electricEnergy = (float) valTemp/10000;
+      Serial.print("Electric Energy:");
+  Serial.print(electricEnergy,4);
+      Serial.println("WH");
+
+         valTemp = 0;
+         j = 40;
+      val = 0.00;
+      for(int i=0;i<6;i++){
+        int valInt =  strRec[i+j];
+        long valLong = pow(16, 5-i)*valInt;
+         valTemp += valLong;
+
+        }
+      float powerFactor = (float) valTemp/10000;
+      Serial.print("Power Factor:");
+      Serial.println(powerFactor,4);
+
+         valTemp = 0;
+         j = 48;
+      val = 0.00;
+      for(int i=0;i<6;i++){
+        int valInt =  strRec[i+j];
+        long valLong = pow(16, 5-i)*valInt;
+         valTemp += valLong;
+
+        }   
+      float CO2 =  (float) valTemp/10000;
+      Serial.print("CO2:");
+      Serial.print(CO2,4);
+      Serial.println("Kg");
+
+   valTemp = 0;
+         j = 64;
+      val = 0.00;
+      for(int i=0;i<6;i++){
+        int valInt =  strRec[i+j];
+        long valLong = pow(16, 5-i)*valInt;
+         valTemp += valLong;
+
+        }
+
+      float frequency =  (float) valTemp/100;
+      Serial.print("Frequency:");
+      Serial.print(frequency,2);      
+      Serial.println("Hz");
+      Serial.println("********************** END ************************");
+	Serial.print("ec01");
+	//delay(1000);
+	strSerial = "";
+     }
+    strSerial = "";
+}
+
